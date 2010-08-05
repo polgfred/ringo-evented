@@ -11,7 +11,6 @@ function HttpConnection(channel) {
 };
 
 HttpConnection.prototype.wrapFuture = function (future) {
-  var conn = this;
   return {
     then: function (continuation) {
       future.addListener(new ChannelFutureListener({ operationComplete: continuation }));
