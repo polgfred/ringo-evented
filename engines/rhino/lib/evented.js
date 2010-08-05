@@ -7,7 +7,7 @@ importPackage(org.jboss.netty.channel.socket.nio);
 
 require('binary'); // lots of stuff that we need for byte streams
 
-var {EventManager} = require('evented/eventmanager');
+var {EventManager} = require('eventmanager');
 
 /**
  * Create a new generic server.
