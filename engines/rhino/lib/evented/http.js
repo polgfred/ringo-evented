@@ -8,7 +8,7 @@ function HttpConnection(channel) {
   this.channel = channel;
   this.remoteAddr = channel.remoteAddress.hostName;
   this.localAddr = channel.localAddress.hostName;
-};
+}
 
 HttpConnection.prototype.wrapFuture = function (future) {
   return {
