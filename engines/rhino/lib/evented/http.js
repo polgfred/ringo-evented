@@ -25,7 +25,7 @@ HttpConnection.prototype.start = function (status, headers) {
   var msg = new DefaultHttpResponse(
     HttpVersion.HTTP_1_1,
     HttpResponseStatus.valueOf(status));
-  for each (var k in Object.keys(headers)) {
+  for each (var k in Object.keys(headers || {})) {
     msg.addHeader(k, headers[k]);
   }
   msg.chunked = true;
