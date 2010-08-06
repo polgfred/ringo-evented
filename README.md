@@ -1,6 +1,6 @@
 ## ringo-evented: An evented library for RingoJS based on the Java Netty project
 
-The goal of `ringo-evented` is to make it really easy to write event-based client and server applications in JavaScript that making full use of both the [CommonJS](http://commonjs.org/) and [Java](http://java.oracle.com/) ecosystems. It is built on top of the excellent [Netty](http://jboss.org/netty/) project, which provides both a solid NIO client/server Java framework and an impressive array of codecs for dealing with network protocols.
+The goal of `ringo-evented` is to make it really easy to write event-based client and server applications in JavaScript that make full use of both the [CommonJS](http://commonjs.org/) and [Java](http://java.oracle.com/) ecosystems. It is built on top of the excellent [Netty](http://jboss.org/netty/) project, which provides both a solid NIO client/server Java framework and an impressive array of codecs for dealing with network protocols.
 
 _At this time `ringo-evented` is in an extremely pre-alpha state, and the APIs should be considered highly unstable. My purpose right now is to create some excitement and interest around the idea, and to show what a good JavaScript Netty wrapper might look like. Feedback is welcome -- nay, encouraged!_
 
