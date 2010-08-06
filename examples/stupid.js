@@ -1,4 +1,3 @@
-include('ringo/scheduler');
 include('evented');
 include('evented/http');
 
