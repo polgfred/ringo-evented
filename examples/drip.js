@@ -1,5 +1,4 @@
 include('ringo/scheduler');
-include('evented');
 include('evented/http');
 
 var server = new HttpServer({ port: 4321 });
