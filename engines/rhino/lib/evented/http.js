@@ -2,12 +2,12 @@ importPackage(org.jboss.netty.buffer);
 importPackage(org.jboss.netty.channel);
 importPackage(org.jboss.netty.handler.codec.http);
 
-var {SocketServer} = require('evented');
+var {InetAddress, SocketServer} = require('evented');
 
 function HttpConnection(channel) {
   this.channel = channel;
-  this.remoteAddr = channel.remoteAddress.hostName;
-  this.localAddr = channel.localAddress.hostName;
+  this.remoteAddress = InetAddress(channel.remoteAddress);
+  this.localAddress = InetAddress(channel.localAddress);
 }
 
 HttpConnection.prototype.wrapFuture = function (future) {

@@ -10,6 +10,20 @@ require('binary'); // lots of stuff that we need for byte streams
 var {EventManager} = require('eventmanager');
 
 /**
+ * Wrap a java.net.InetAddress object.
+ */
+function InetAddress(addr) {
+  return {
+    get hostname() {
+      return String(addr.hostName);
+    },
+    get address() {
+      return String(addr.hostAddress);
+    }
+  };
+}
+
+/**
  * Create a new generic server.
  */
 function SocketServer(options) {
@@ -33,4 +47,5 @@ SocketServer.prototype.start = function () {
   this.bootstrap.bind(new InetSocketAddress(this.options.port));
 };
 
+exports.InetAddress = InetAddress;
 exports.SocketServer = SocketServer;

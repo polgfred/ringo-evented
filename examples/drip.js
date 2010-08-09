@@ -5,7 +5,7 @@ var server = new HttpServer({ port: 4321 });
 
 server.listen({
   connect: function (conn) {
-    print('connected from', conn.remoteAddr);
+    print('connected from', conn.remoteAddress.hostname);
     conn.start(200, {
       'content-type': 'text/plain'
     });
