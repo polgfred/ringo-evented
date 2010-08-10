@@ -1,6 +1,7 @@
-importPackage(org.jboss.netty.buffer);
-importPackage(org.jboss.netty.channel);
-importPackage(org.jboss.netty.handler.codec.http);
+var {ChannelBuffers} = org.jboss.netty.buffer;
+var {Channels, ChannelFutureListener, ChannelUpstreamHandler} = org.jboss.netty.channel;
+var {DefaultHttpResponse, HttpVersion, HttpResponseStatus, DefaultHttpChunk,
+     HttpRequestDecoder, HttpResponseEncoder} = org.jboss.netty.handler.codec.http;
 
 var {InetAddress, SocketServer} = require('evented');
 
