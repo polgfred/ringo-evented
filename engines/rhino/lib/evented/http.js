@@ -109,4 +109,5 @@ HttpServer.prototype.convertMessage = function (message) {
 /**
  * Module exports.
  */
+exports.HttpConnection = HttpConnection;
 exports.HttpServer = HttpServer;
