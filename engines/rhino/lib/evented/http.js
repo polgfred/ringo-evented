@@ -3,15 +3,30 @@ importPackage(org.jboss.netty.channel);
 importPackage(org.jboss.netty.handler.codec.http);
 importPackage(org.jboss.netty.util);
 
-var {wrapInetAddress, SocketServer} = require('evented');
+var {SocketServer} = require('evented');
 
 /**
  * Wrap a Netty channel.
  */
 function HttpConnection(channel) {
   this.channel = channel;
-  this.remoteAddress = wrapInetAddress(channel.remoteAddress);
-  this.localAddress = wrapInetAddress(channel.localAddress);
+  this.remoteAddress = this.wrapAddress(channel.remoteAddress);
+  this.localAddress = this.wrapAddress(channel.localAddress);
+}
+
+/**
+ * Wrap a java.net.InetAddress object.
+ *
+ * @returns an internet address
+ */
+HttpConnection.prototype.wrapAddress = function (addr) {
+  var hostname = String(addr.hostName);
+  var address = String(addr.hostAddress);
+
+  return {
+    get hostname() { return hostname; },
+    get address()  { return address;  }
+  };
 }
 
 /**

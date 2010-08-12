@@ -11,22 +11,6 @@ require('binary'); // lots of stuff that we need for byte streams
 var {EventManager} = require('eventmanager');
 
 /**
- * Wrap a java.net.InetAddress object.
- *
- * @returns an internet address
- */
-function wrapInetAddress(addr) {
-  return {
-    get hostname() {
-      return String(addr.hostName);
-    },
-    get address() {
-      return String(addr.hostAddress);
-    }
-  };
-}
-
-/**
  * Create a new generic server. (You probably won't ever call this directly.)
  *
  * @returns a new socket server
@@ -87,5 +71,4 @@ SocketServer.prototype.start = function () {
 /**
  * Module exports.
  */
-exports.wrapInetAddress = wrapInetAddress;
 exports.SocketServer = SocketServer;
