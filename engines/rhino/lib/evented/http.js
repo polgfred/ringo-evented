@@ -102,7 +102,7 @@ HttpServer.prototype.wrapConnection = function (channel) {
  *
  * @returns the message string
  */
-HttpServer.prototype.convertMessage = function (message) {
+HttpServer.prototype.wrapMessage = function (message) {
   return String(message.content.toString('UTF8'));
 };
 

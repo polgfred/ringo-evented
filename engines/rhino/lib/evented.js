@@ -44,7 +44,7 @@ function SocketServer(options) {
  *
  * @returns a wrapped error
  */
-SocketServer.prototype.convertError = function (error) {
+SocketServer.prototype.wrapError = function (error) {
   return error; // return it as-is for now
 };
 
@@ -63,9 +63,9 @@ SocketServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
       ctx.sendUpstream(evt);
     }
   } else if (evt instanceof MessageEvent) {
-    this.notify('data', this.wrapConnection(ctx.channel), this.convertMessage(evt.message));
+    this.notify('data', this.wrapConnection(ctx.channel), this.wrapMessage(evt.message));
   } else if (evt instanceof ExceptionEvent) {
-    this.notify('error', this.wrapConnection(ctx.channel), this.convertError(evt.cause));
+    this.notify('error', this.wrapConnection(ctx.channel), this.wrapError(evt.cause));
   } else {
     ctx.sendUpstream(evt);
   }
