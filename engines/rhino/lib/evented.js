@@ -32,7 +32,7 @@ function wrapInetAddress(addr) {
  * @returns a new socket server
  */
 function SocketServer(options) {
-  this.options = options;
+  this.options = options || {};
   this.bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(
       Executors.newCachedThreadPool(),
