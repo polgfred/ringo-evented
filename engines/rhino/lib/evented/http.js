@@ -1,6 +1,7 @@
 importPackage(org.jboss.netty.buffer);
 importPackage(org.jboss.netty.channel);
 importPackage(org.jboss.netty.handler.codec.http);
+importPackage(org.jboss.netty.util);
 
 var {wrapInetAddress, SocketServer} = require('evented');
 
@@ -110,7 +111,7 @@ HttpServer.prototype.wrapConnection = function (channel) {
  * @returns the message string
  */
 HttpServer.prototype.wrapMessage = function (message) {
-  return String(message.content.toString('UTF8'));
+  return String(message.content.toString(CharsetUtil.UTF_8));
 };
 
 /**
