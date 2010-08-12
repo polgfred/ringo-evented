@@ -15,7 +15,7 @@ var {EventManager} = require('eventmanager');
  *
  * @returns an internet address
  */
-function InetAddress(addr) {
+function wrapInetAddress(addr) {
   return {
     get hostname() {
       return String(addr.hostName);
@@ -87,5 +87,5 @@ SocketServer.prototype.start = function () {
 /**
  * Module exports.
  */
-exports.InetAddress = InetAddress;
+exports.wrapInetAddress = wrapInetAddress;
 exports.SocketServer = SocketServer;

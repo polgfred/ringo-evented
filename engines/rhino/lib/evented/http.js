@@ -2,15 +2,15 @@ importPackage(org.jboss.netty.buffer);
 importPackage(org.jboss.netty.channel);
 importPackage(org.jboss.netty.handler.codec.http);
 
-var {InetAddress, SocketServer} = require('evented');
+var {wrapInetAddress, SocketServer} = require('evented');
 
 /**
  * Wrap a Netty channel.
  */
 function HttpConnection(channel) {
   this.channel = channel;
-  this.remoteAddress = InetAddress(channel.remoteAddress);
-  this.localAddress = InetAddress(channel.localAddress);
+  this.remoteAddress = wrapInetAddress(channel.remoteAddress);
+  this.localAddress = wrapInetAddress(channel.localAddress);
 }
 
 /**
