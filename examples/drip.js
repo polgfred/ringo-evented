@@ -10,7 +10,7 @@ server.listen({
       'content-type': 'text/plain'
     });
   },
-  data: function (conn, data) {
+  request: function (conn) {
     var times = 0;
     (function drip() {
       times++;
