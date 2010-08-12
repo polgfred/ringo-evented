@@ -6,7 +6,7 @@ importPackage(org.jboss.netty.util);
 var {SocketServer} = require('evented');
 
 /**
- * Wrap a Netty channel.
+ * (Internal) Wrap a Netty channel.
  */
 function HttpConnection(channel) {
   this.channel = channel;
@@ -106,6 +106,73 @@ HttpServer.prototype.createPipeline = function () {
     handleUpstream: this.dispatchUpstreamEvent.bind(this)
   }));
   return pipeline;
+};
+
+/**
+ * (Internal) Intercept and handle HTTP messages.
+ */
+HttpServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
+  if (evt instanceof MessageEvent) {
+    var message = evt.message;
+    if (message instanceof HttpRequest) {
+      this.notify('request', this.wrapConnection(ctx.channel), this.wrapHttpRequest(message));
+    } else if (message instanceof HttpChunk) {
+      this.notify('chunk', this.wrapConnection(ctx.channel), this.wrapHttpChunk(message));
+    }
+  } else {
+    SocketServer.prototype.dispatchUpstreamEvent.call(this, ctx, evt);
+  }
+};
+
+/**
+ * (Internal) Return a read-only view of a Netty HttpRequest.
+ *
+ * @returns a request
+ */
+HttpServer.prototype.wrapHttpRequest = function (request) {
+  // parse the headers
+  var headers = {};
+  for each (var entry in Iterator(request.headers)) {
+    headers[entry.key.toLowerCase()] = String(entry.value);
+  }
+
+  // parse the path and parameters
+  var decoder = new QueryStringDecoder(request.uri);
+  var path = String(decoder.path);
+  var params = {};
+  for each (var entry in Iterator(decoder.parameters.entrySet())) {
+    params[entry.key] = String(entry.value.get(0));
+  }
+
+  var content = String(request.content.toString(CharsetUtil.UTF_8));
+  var method = String(request.method.name);
+  var uri = String(request.uri);
+  var chunked = request.chunked;
+
+  return {
+    get method()  { return method;  },
+    get uri()     { return uri;     },
+    get path()    { return path;    },
+    get params()  { return params;  },
+    get headers() { return headers; },
+    get content() { return content; },
+    get chunked() { return chunked; }
+  };
+};
+
+/**
+ * (Internal) Return a read-only view of a Netty HttpChunk.
+ *
+ * @returns a chunk
+ */
+HttpServer.prototype.wrapHttpChunk = function (chunk) {
+  var content = String(chunk.content.toString(CharsetUtil.UTF_8));
+  var last = chunk.last;
+
+  return {
+    get content() { return content; },
+    get last()    { return last;    }
+  };
 };
 
 /**
