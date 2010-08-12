@@ -56,6 +56,10 @@ HttpConnection.prototype.write = function (data) {
 /**
  * Construct a new HTTP server with a sensible Netty ChannelPipelineFactory. See #createPipeline.
  *
+ * Options:
+ *  port
+ *  compress
+ *
  * @returns a new HTTP server
  */
 function HttpServer(options) {
@@ -77,12 +81,15 @@ HttpServer.prototype = (function () {
  * @returns a new ChannelPipeline
  */
 HttpServer.prototype.createPipeline = function () {
-  return Channels.pipeline(
-    new HttpRequestDecoder(),
-    new HttpResponseEncoder(),
-    new ChannelUpstreamHandler({
-      handleUpstream: this.dispatchUpstreamEvent.bind(this)
-    }));
+  var pipeline = Channels.pipeline();
+  pipeline.addLast('decoder', new HttpRequestDecoder());
+  pipeline.addLast('encoder', new HttpResponseEncoder());
+  if (this.options.compress)
+    pipeline.addLast('deflater', new HttpContentCompressor());
+  pipeline.addLast('handler', new ChannelUpstreamHandler({
+    handleUpstream: this.dispatchUpstreamEvent.bind(this)
+  }));
+  return pipeline;
 };
 
 /**
