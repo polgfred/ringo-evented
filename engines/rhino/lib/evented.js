@@ -24,35 +24,44 @@ function SocketServer(options) {
 }
 
 /**
- * (Internal) Wrap a Netty ExceptionEvent in something more useful.
- *
- * @returns a wrapped error
- */
-SocketServer.prototype.wrapError = function (error) {
-  return error; // return it as-is for now
-};
-
-/**
  * (Internal) Dispatch socket-level events to the SocketServer's event listener.
  */
 SocketServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
   if (evt instanceof ChannelStateEvent) {
-    if (evt.state == ChannelState.OPEN) {
-      this.notify(evt.value ? 'open' : 'close', this.wrapConnection(ctx.channel));
-    } else if (evt.state == ChannelState.BOUND) {
-      this.notify(evt.value ? 'bind' : 'unbind', this.wrapConnection(ctx.channel));
-    } else if (evt.state == ChannelState.CONNECTED) {
-      this.notify(evt.value ? 'connect' : 'disconnect', this.wrapConnection(ctx.channel));
-    } else {
-      ctx.sendUpstream(evt);
-    }
+    this.handleStateChange(ctx, evt);
   } else if (evt instanceof MessageEvent) {
-    this.notify('data', this.wrapConnection(ctx.channel), this.wrapMessage(evt.message));
+    this.handleMessage(ctx, evt);
   } else if (evt instanceof ExceptionEvent) {
-    this.notify('error', this.wrapConnection(ctx.channel), this.wrapError(evt.cause));
-  } else {
-    ctx.sendUpstream(evt);
+    this.handleError(ctx, evt);
   }
+};
+
+/**
+ * (Internal) Handle a Netty ChannelStateEvent.
+ */
+SocketServer.prototype.handleStateChange = function (ctx, evt) {
+  var conn = this.wrapConnection(ctx.channel);
+  if (evt.state == ChannelState.OPEN) {
+    this.notify(evt.value ? 'open' : 'close', conn);
+  } else if (evt.state == ChannelState.BOUND) {
+    this.notify(evt.value ? 'bind' : 'unbind', conn);
+  } else if (evt.state == ChannelState.CONNECTED) {
+    this.notify(evt.value ? 'connect' : 'disconnect', conn);
+  }
+};
+
+/**
+ * (Internal) Handle a Netty MessageEvent. Server subtypes need to override this, as it does nothing.
+ */
+SocketServer.prototype.handleMessage = function (ctx, evt) {
+};
+
+/**
+ * (Internal) Handle a Netty ExceptionEvent. Server subtypes can be smarter about this if they wish.
+ */
+SocketServer.prototype.handleError = function (ctx, evt) {
+  var conn = this.wrapConnection(ctx.channel);
+  this.notify('error', conn, evt.cause);
 };
 
 /**

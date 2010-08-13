@@ -110,18 +110,16 @@ HttpServer.prototype.createPipeline = function () {
 };
 
 /**
- * (Internal) Intercept and handle HTTP messages.
+ * (Internal) Handle a Netty MessageEvent. Here, we determine whether the message is a HttpRequest or an
+ * HttpChunk, and then wrap appropriately.
  */
-HttpServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
-  if (evt instanceof MessageEvent) {
-    var message = evt.message;
-    if (message instanceof HttpRequest) {
-      this.notify('request', this.wrapConnection(ctx.channel), this.wrapHttpRequest(message));
-    } else if (message instanceof HttpChunk) {
-      this.notify('chunk', this.wrapConnection(ctx.channel), this.wrapHttpChunk(message));
-    }
-  } else {
-    SocketServer.prototype.dispatchUpstreamEvent.call(this, ctx, evt);
+HttpServer.prototype.handleMessage = function (ctx, evt) {
+  var conn = this.wrapConnection(ctx.channel);
+  var message = evt.message;
+  if (message instanceof HttpRequest) {
+    this.notify('request', conn, this.wrapHttpRequest(message));
+  } else if (message instanceof HttpChunk) {
+    this.notify('chunk', conn, this.wrapHttpChunk(message));
   }
 };
 
@@ -207,15 +205,6 @@ HttpServer.prototype.wrapHttpChunk = function (chunk) {
  */
 HttpServer.prototype.wrapConnection = function (channel) {
   return new HttpConnection(channel);
-};
-
-/**
- * (Internal) Convert the HTTP message body into a properly encoded JavaScript string.
- *
- * @returns the message string
- */
-HttpServer.prototype.wrapMessage = function (message) {
-  return String(message.content.toString(CharsetUtil.UTF_8));
 };
 
 /**
