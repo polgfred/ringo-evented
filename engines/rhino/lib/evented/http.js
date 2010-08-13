@@ -125,28 +125,44 @@ HttpServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
 };
 
 /**
- * (Internal) Return a read-only view of a Netty HttpRequest.
+ * (Internal) Return path and params for a Netty HttpRequest.
  *
- * @returns a request
+ * @returns an array consisting of a path and params hash
  */
-HttpServer.prototype.wrapHttpRequest = function (request) {
-  // parse the headers
-  var headers = {};
-  for each (var entry in Iterator(request.headers)) {
-    headers[entry.key.toLowerCase()] = String(entry.value);
-  }
-
-  // parse the path and parameters
+HttpServer.prototype.getHttpPathAndParams = function (request) {
   var decoder = new QueryStringDecoder(request.uri);
   var path = String(decoder.path);
   var params = {};
   for each (var entry in Iterator(decoder.parameters.entrySet())) {
     params[entry.key] = String(entry.value.get(0));
   }
+  return [path, params];
+};
 
-  var content = String(request.content.toString(CharsetUtil.UTF_8));
+/**
+ * (Internal) Return headers for a Netty HttpRequest or HttpChunkTrailer.
+ *
+ * @returns a headers hash
+ */
+HttpServer.prototype.getHttpHeaders = function (request) {
+  var headers = {};
+  for each (var entry in Iterator(request.headers)) {
+    headers[entry.key.toLowerCase()] = String(entry.value);
+  }
+  return headers;
+};
+
+/**
+ * (Internal) Return a read-only view of a Netty HttpRequest.
+ *
+ * @returns a request
+ */
+HttpServer.prototype.wrapHttpRequest = function (request) {
   var method = String(request.method.name);
   var uri = String(request.uri);
+  var [path, params] = this.getHttpPathAndParams(request);
+  var headers = this.getHttpHeaders(request);
+  var content = String(request.content.toString(CharsetUtil.UTF_8));
   var chunked = request.chunked;
 
   return {
