@@ -100,8 +100,9 @@ HttpServer.prototype.createPipeline = function () {
   var pipeline = Channels.pipeline();
   pipeline.addLast('decoder', new HttpRequestDecoder());
   pipeline.addLast('encoder', new HttpResponseEncoder());
-  if (this.options.compress)
+  if (this.options.compress) {
     pipeline.addLast('deflater', new HttpContentCompressor());
+  }
   pipeline.addLast('handler', new ChannelUpstreamHandler({
     handleUpstream: this.dispatchUpstreamEvent.bind(this)
   }));
@@ -202,7 +203,7 @@ HttpServer.prototype.wrapHttpChunk = function (chunk) {
  * We make this polymorphic so that we can handle open/bind/connect events at the socket level, while
  * still providing the correct connection type to the client.
  *
- * @returns an HTTP client
+ * @returns an HTTP connection
  */
 HttpServer.prototype.wrapConnection = function (channel) {
   return new HttpConnection(channel);
