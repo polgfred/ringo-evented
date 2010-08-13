@@ -24,8 +24,8 @@ HttpConnection.prototype.wrapAddress = function (addr) {
   var address = String(addr.hostAddress);
 
   return {
-    get hostname() { return hostname; },
-    get address()  { return address;  }
+    hostname: hostname,
+    address:  address
   };
 }
 
@@ -166,13 +166,13 @@ HttpServer.prototype.wrapHttpRequest = function (request) {
   var chunked = request.chunked;
 
   return {
-    get method()  { return method;  },
-    get uri()     { return uri;     },
-    get path()    { return path;    },
-    get params()  { return params;  },
-    get headers() { return headers; },
-    get content() { return content; },
-    get chunked() { return chunked; }
+    method:   method,
+    uri:      uri,
+    path:     path,
+    params:   params,
+    headers:  headers,
+    content:  content,
+    chunked:  chunked
   };
 };
 
@@ -190,8 +190,9 @@ HttpServer.prototype.wrapHttpChunk = function (chunk) {
   }
 
   return {
-    get content() { return content; },
-    get last()    { return last;    }
+    headers:  headers,
+    content:  content,
+    last:     last
   };
 };
 
