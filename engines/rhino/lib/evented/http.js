@@ -182,8 +182,12 @@ HttpServer.prototype.wrapHttpRequest = function (request) {
  * @returns a chunk
  */
 HttpServer.prototype.wrapHttpChunk = function (chunk) {
+  var headers;
   var content = String(chunk.content.toString(CharsetUtil.UTF_8));
   var last = chunk.last;
+  if (last) {
+    headers = this.getHttpHeaders(chunk);
+  }
 
   return {
     get content() { return content; },
