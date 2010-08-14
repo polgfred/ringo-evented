@@ -8,7 +8,7 @@ _At this time `ringo-evented` is in an extremely pre-alpha state, and the APIs s
 
 `ringo-evented` is bundled as a CommonJS package targeting the [RingoJS](http://ringojs.org/) platform (though I'm keeping it CommonJS compliant in order to work with other Rhino-based engines, e.g. Narwhal, as well). You can install it globally into your `ringojs/packages` directory, or as a dependency of another package or Ringo webapp.
 
-Currently a basic `HttpServer` object is supported. Let's look at a couple examples.
+Currently, basic socket server, HTTP server, and HTTP connection objects are supported. Let's look at a couple examples.
 
 ## Examples
 
@@ -18,7 +18,7 @@ I'll quote `examples/stupid.js` in its entirety because it's so short:
     
     var server = new HttpServer({ port: 4321 });
     
-    server.listen('data', function (conn) {
+    server.listen('request', function (conn) {
       conn.start(200);
       conn.write('A ringo says what?\n').thenClose();
     });
@@ -29,7 +29,7 @@ This is a fully functioning web app that does pretty much exactly what it looks 
 
 Things to note:
 
-* Rather than blocking in a loop and waiting for incoming connections, you simply ask the server to register you for the events that you care about. Mostly you'll care about the 'data' event. (You can also register for 'open', 'bind', 'connect', 'disconnect', 'unbind', 'close', and 'error'.)
+* Rather than blocking in a loop and waiting for incoming connections, you simply ask the server to register you for the events that you care about. Mostly you'll care about the 'request' and 'chunk' events. (You can also register for 'open', 'bind', 'connect', 'disconnect', 'unbind', 'close', and 'error'.)
 * It's not just that incoming IO is non-blocking; outgoing IO is as well. If we did `conn.write(...)` followed by `conn.close()` we'd have no guarantee that the write actually completed before the socket closed. To make non-blocking writes easier to work with, the `HttpConnection#write` method returns a special object called a "promise," which supports the chaining together of asynchronous operations. As a convenience, write-promises support a `.thenClose()` operation which promises to close the connection after the write completes.
 
 As an exercise, you can also check out `examples/drip.js` to see an application that writes "drop" to the client once per second, for ten seconds, and then closes the connection.

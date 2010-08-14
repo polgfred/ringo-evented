@@ -1,16 +1,42 @@
-importPackage(org.jboss.netty.buffer);
-importPackage(org.jboss.netty.channel);
-importPackage(org.jboss.netty.handler.codec.http);
+var {ChannelBuffers} = org.jboss.netty.buffer;
+var {Channels,
+     ChannelFutureListener,
+     ChannelUpstreamHandler} = org.jboss.netty.channel;
+var {DefaultHttpChunk,
+     DefaultHttpResponse,
+     HttpChunk,
+     HttpRequest,
+     HttpRequestDecoder,
+     HttpResponseEncoder,
+     HttpResponseStatus,
+     HttpVersion,
+     QueryStringDecoder} = org.jboss.netty.handler.codec.http;
+var {CharsetUtil} = org.jboss.netty.util;
 
-var {InetAddress, SocketServer} = require('evented');
+var {SocketServer} = require('evented');
 
 /**
- * Wrap a Netty channel.
+ * (Internal) Wrap a Netty channel.
  */
 function HttpConnection(channel) {
   this.channel = channel;
-  this.remoteAddress = InetAddress(channel.remoteAddress);
-  this.localAddress = InetAddress(channel.localAddress);
+  this.remoteAddress = this.wrapAddress(channel.remoteAddress);
+  this.localAddress = this.wrapAddress(channel.localAddress);
+}
+
+/**
+ * Wrap a java.net.InetAddress object.
+ *
+ * @returns an internet address
+ */
+HttpConnection.prototype.wrapAddress = function (addr) {
+  var hostname = String(addr.hostName);
+  var address = String(addr.hostAddress);
+
+  return {
+    hostname: hostname,
+    address:  address
+  };
 }
 
 /**
@@ -56,6 +82,10 @@ HttpConnection.prototype.write = function (data) {
 /**
  * Construct a new HTTP server with a sensible Netty ChannelPipelineFactory. See #createPipeline.
  *
+ * Options:
+ *  port
+ *  compress
+ *
  * @returns a new HTTP server
  */
 function HttpServer(options) {
@@ -77,12 +107,102 @@ HttpServer.prototype = (function () {
  * @returns a new ChannelPipeline
  */
 HttpServer.prototype.createPipeline = function () {
-  return Channels.pipeline(
-    new HttpRequestDecoder(),
-    new HttpResponseEncoder(),
-    new ChannelUpstreamHandler({
-      handleUpstream: this.dispatchUpstreamEvent.bind(this)
-    }));
+  var pipeline = Channels.pipeline();
+  pipeline.addLast('decoder', new HttpRequestDecoder());
+  pipeline.addLast('encoder', new HttpResponseEncoder());
+  if (this.options.compress) {
+    pipeline.addLast('deflater', new HttpContentCompressor());
+  }
+  pipeline.addLast('handler', new ChannelUpstreamHandler({
+    handleUpstream: this.dispatchUpstreamEvent.bind(this)
+  }));
+  return pipeline;
+};
+
+/**
+ * (Internal) Handle a Netty MessageEvent. Here, we determine whether the message is a HttpRequest or an
+ * HttpChunk, and then wrap appropriately.
+ */
+HttpServer.prototype.handleMessage = function (ctx, evt) {
+  var conn = this.wrapConnection(ctx.channel);
+  var message = evt.message;
+  if (message instanceof HttpRequest) {
+    this.notify('request', conn, this.wrapHttpRequest(message));
+  } else if (message instanceof HttpChunk) {
+    this.notify('chunk', conn, this.wrapHttpChunk(message));
+  }
+};
+
+/**
+ * (Internal) Return path and params for a Netty HttpRequest.
+ *
+ * @returns an array consisting of a path and params hash
+ */
+HttpServer.prototype.getHttpPathAndParams = function (request) {
+  var decoder = new QueryStringDecoder(request.uri);
+  var path = String(decoder.path);
+  var params = {};
+  for each (var entry in Iterator(decoder.parameters.entrySet())) {
+    params[entry.key] = String(entry.value.get(0));
+  }
+  return [path, params];
+};
+
+/**
+ * (Internal) Return headers for a Netty HttpRequest or HttpChunkTrailer.
+ *
+ * @returns a headers hash
+ */
+HttpServer.prototype.getHttpHeaders = function (request) {
+  var headers = {};
+  for each (var entry in Iterator(request.headers)) {
+    headers[entry.key.toLowerCase()] = String(entry.value);
+  }
+  return headers;
+};
+
+/**
+ * (Internal) Return a read-only view of a Netty HttpRequest.
+ *
+ * @returns a request
+ */
+HttpServer.prototype.wrapHttpRequest = function (request) {
+  var method = String(request.method.name);
+  var uri = String(request.uri);
+  var [path, params] = this.getHttpPathAndParams(request);
+  var headers = this.getHttpHeaders(request);
+  var content = String(request.content.toString(CharsetUtil.UTF_8));
+  var chunked = request.chunked;
+
+  return {
+    method:   method,
+    uri:      uri,
+    path:     path,
+    params:   params,
+    headers:  headers,
+    content:  content,
+    chunked:  chunked
+  };
+};
+
+/**
+ * (Internal) Return a read-only view of a Netty HttpChunk.
+ *
+ * @returns a chunk
+ */
+HttpServer.prototype.wrapHttpChunk = function (chunk) {
+  var headers;
+  var content = String(chunk.content.toString(CharsetUtil.UTF_8));
+  var last = chunk.last;
+  if (last) {
+    headers = this.getHttpHeaders(chunk);
+  }
+
+  return {
+    headers:  headers,
+    content:  content,
+    last:     last
+  };
 };
 
 /**
@@ -91,19 +211,10 @@ HttpServer.prototype.createPipeline = function () {
  * We make this polymorphic so that we can handle open/bind/connect events at the socket level, while
  * still providing the correct connection type to the client.
  *
- * @returns an HTTP client
+ * @returns an HTTP connection
  */
 HttpServer.prototype.wrapConnection = function (channel) {
   return new HttpConnection(channel);
-};
-
-/**
- * (Internal) Convert the HTTP message body into a properly encoded JavaScript string.
- *
- * @returns the message string
- */
-HttpServer.prototype.convertMessage = function (message) {
-  return String(message.content.toString('UTF8'));
 };
 
 /**

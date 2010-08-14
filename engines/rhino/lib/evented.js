@@ -1,30 +1,17 @@
-importPackage(java.io);
-importPackage(java.net);
-importPackage(java.util.concurrent);
+var {InetSocketAddress} = java.net;
+var {Executors} = java.util.concurrent;
 
-importPackage(org.jboss.netty.bootstrap);
-importPackage(org.jboss.netty.channel);
-importPackage(org.jboss.netty.channel.socket.nio);
+var {ServerBootstrap} = org.jboss.netty.bootstrap;
+var {ChannelState,
+     ChannelStateEvent,
+     ExceptionEvent,
+     MessageEvent} = org.jboss.netty.channel;
+var {NioServerSocketChannelFactory} = org.jboss.netty.channel.socket.nio;
 
-require('binary'); // lots of stuff that we need for byte streams
+// stuff that we need for byte streams
+require('binary');
 
 var {EventManager} = require('eventmanager');
-
-/**
- * Wrap a java.net.InetAddress object.
- *
- * @returns an internet address
- */
-function InetAddress(addr) {
-  return {
-    get hostname() {
-      return String(addr.hostName);
-    },
-    get address() {
-      return String(addr.hostAddress);
-    }
-  };
-}
 
 /**
  * Create a new generic server. (You probably won't ever call this directly.)
@@ -32,7 +19,7 @@ function InetAddress(addr) {
  * @returns a new socket server
  */
 function SocketServer(options) {
-  this.options = options;
+  this.options = options || {};
   this.bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(
       Executors.newCachedThreadPool(),
@@ -40,35 +27,45 @@ function SocketServer(options) {
 }
 
 /**
- * (Internal) Wrap a Netty ExceptionEvent in something more useful.
- *
- * @returns a wrapped error
- */
-SocketServer.prototype.convertError = function (error) {
-  return error; // return it as-is for now
-};
-
-/**
  * (Internal) Dispatch socket-level events to the SocketServer's event listener.
  */
 SocketServer.prototype.dispatchUpstreamEvent = function (ctx, evt) {
   if (evt instanceof ChannelStateEvent) {
-    if (evt.state == ChannelState.OPEN) {
-      this.notify(evt.value ? 'open' : 'close', this.wrapConnection(ctx.channel));
-    } else if (evt.state == ChannelState.BOUND) {
-      this.notify(evt.value ? 'bind' : 'unbind', this.wrapConnection(ctx.channel));
-    } else if (evt.state == ChannelState.CONNECTED) {
-      this.notify(evt.value ? 'connect' : 'disconnect', this.wrapConnection(ctx.channel));
-    } else {
-      ctx.sendUpstream(evt);
-    }
+    this.handleStateChange(ctx, evt);
   } else if (evt instanceof MessageEvent) {
-    this.notify('data', this.wrapConnection(ctx.channel), this.convertMessage(evt.message));
+    this.handleMessage(ctx, evt);
   } else if (evt instanceof ExceptionEvent) {
-    this.notify('error', this.wrapConnection(ctx.channel), this.convertError(evt.cause));
-  } else {
-    ctx.sendUpstream(evt);
+    this.handleError(ctx, evt);
   }
+};
+
+/**
+ * (Internal) Handle a Netty ChannelStateEvent.
+ */
+SocketServer.prototype.handleStateChange = function (ctx, evt) {
+  var conn = this.wrapConnection(ctx.channel);
+  if (evt.state == ChannelState.OPEN) {
+    this.notify(evt.value ? 'open' : 'close', conn);
+  } else if (evt.state == ChannelState.BOUND) {
+    this.notify(evt.value ? 'bind' : 'unbind', conn);
+  } else if (evt.state == ChannelState.CONNECTED) {
+    this.notify(evt.value ? 'connect' : 'disconnect', conn);
+  }
+};
+
+/**
+ * (Internal) Handle a Netty MessageEvent. Server subtypes need to override this, as it does nothing.
+ */
+SocketServer.prototype.handleMessage = function (ctx, evt) {
+};
+
+/**
+ * (Internal) Handle a Netty ExceptionEvent. Server subtypes can be smarter about this if they wish.
+ */
+SocketServer.prototype.handleError = function (ctx, evt) {
+  evt.cause.printStackTrace();
+  var conn = this.wrapConnection(ctx.channel);
+  this.notify('error', conn, evt.cause);
 };
 
 /**
@@ -87,5 +84,4 @@ SocketServer.prototype.start = function () {
 /**
  * Module exports.
  */
-exports.InetAddress = InetAddress;
 exports.SocketServer = SocketServer;
