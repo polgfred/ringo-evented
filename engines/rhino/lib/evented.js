@@ -1,12 +1,15 @@
-importPackage(java.io);
-importPackage(java.net);
-importPackage(java.util.concurrent);
+var {InetSocketAddress} = java.net;
+var {Executors} = java.util.concurrent;
 
-importPackage(org.jboss.netty.bootstrap);
-importPackage(org.jboss.netty.channel);
-importPackage(org.jboss.netty.channel.socket.nio);
+var {ServerBootstrap} = org.jboss.netty.bootstrap;
+var {ChannelState,
+     ChannelStateEvent,
+     ExceptionEvent,
+     MessageEvent} = org.jboss.netty.channel;
+var {NioServerSocketChannelFactory} = org.jboss.netty.channel.socket.nio;
 
-require('binary'); // lots of stuff that we need for byte streams
+// stuff that we need for byte streams
+require('binary');
 
 var {EventManager} = require('eventmanager');
 

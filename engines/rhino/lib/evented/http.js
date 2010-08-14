@@ -1,7 +1,17 @@
-importPackage(org.jboss.netty.buffer);
-importPackage(org.jboss.netty.channel);
-importPackage(org.jboss.netty.handler.codec.http);
-importPackage(org.jboss.netty.util);
+var {ChannelBuffers} = org.jboss.netty.buffer;
+var {Channels,
+     ChannelFutureListener,
+     ChannelUpstreamHandler} = org.jboss.netty.channel;
+var {DefaultHttpChunk,
+     DefaultHttpResponse,
+     HttpChunk,
+     HttpRequest,
+     HttpRequestDecoder,
+     HttpResponseEncoder,
+     HttpResponseStatus,
+     HttpVersion,
+     QueryStringDecoder} = org.jboss.netty.handler.codec.http;
+var {CharsetUtil} = org.jboss.netty.util;
 
 var {SocketServer} = require('evented');
 
