@@ -63,6 +63,7 @@ SocketServer.prototype.handleMessage = function (ctx, evt) {
  * (Internal) Handle a Netty ExceptionEvent. Server subtypes can be smarter about this if they wish.
  */
 SocketServer.prototype.handleError = function (ctx, evt) {
+  evt.cause.printStackTrace();
   var conn = this.wrapConnection(ctx.channel);
   this.notify('error', conn, evt.cause);
 };
