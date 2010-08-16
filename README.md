@@ -12,15 +12,20 @@ Currently, basic socket server, HTTP server, and HTTP connection objects are sup
 
 ## Examples
 
-I'll quote `examples/stupid.js` in its entirety because it's so short:
+I'll quote `examples/server.js` in its entirety because it's so short:
 
     include('evented/http');
     
     var server = new HttpServer({ port: 4321 });
     
-    server.listen('request', function (conn) {
-      conn.start(200);
-      conn.write('A ringo says what?\n').thenClose();
+    server.listen({
+      request: function (conn, request) {
+        conn.write({
+          status: 200,
+          headers: { 'content-type': 'text/plain' },
+          content: 'A ringo says what?\n'
+        }).thenClose();
+      }
     });
     
     server.start();
