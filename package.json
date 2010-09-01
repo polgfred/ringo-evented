@@ -1,5 +1,5 @@
 {
   "name": "ringo-evented",
   "lib": ["lib"],
-  "jars": ["jars/netty-3.2.1.Final.jar"]
+  "jars": ["jars/netty-3.2.2.Final.jar"]
 }
