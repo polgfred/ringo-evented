@@ -3,7 +3,6 @@ var {Channels,
      ChannelFutureListener,
      ChannelUpstreamHandler} = org.jboss.netty.channel;
 var {DefaultHttpChunk,
-     DefaultHttpChunkTrailer,
      DefaultHttpRequest,
      DefaultHttpResponse,
      HttpChunk,
@@ -44,7 +43,7 @@ function getPathAndParams(request) {
 }
 
 /**
- * (Internal) Return headers for a Netty HttpRequest or HttpChunkTrailer.
+ * (Internal) Return headers for a Netty HttpRequest or HttpResponse.
  *
  * @returns a headers hash
  */
