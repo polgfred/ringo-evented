@@ -343,5 +343,5 @@ HttpClient.prototype.wrapChannel = function (channel) {
  * Module exports.
  */
 exports.HttpConnection = HttpConnection;
-exports.HttpClient = HttpClient;
-exports.HttpServer = HttpServer;
+exports.HttpClient     = HttpClient;
+exports.HttpServer     = HttpServer;
