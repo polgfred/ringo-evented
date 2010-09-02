@@ -9,12 +9,11 @@ var {DefaultHttpChunk,
      HttpContentCompressor,
      HttpContentDecompressor,
      HttpClientCodec,
+     HttpServerCodec,
      HttpHeaders,
      HttpMethod,
      HttpRequest,
-     HttpRequestDecoder,
      HttpResponse,
-     HttpResponseEncoder,
      HttpResponseStatus,
      HttpVersion,
      QueryStringDecoder,
@@ -237,8 +236,7 @@ extend(HttpServer, SocketServer);
  */
 HttpServer.prototype.createPipeline = function () {
   var pipeline = Channels.pipeline();
-  pipeline.addLast('decoder', new HttpRequestDecoder());
-  pipeline.addLast('encoder', new HttpResponseEncoder());
+  pipeline.addLast('codec', new HttpServerCodec());
   if (this.options.compress) {
     pipeline.addLast('deflater', new HttpContentCompressor());
   }
