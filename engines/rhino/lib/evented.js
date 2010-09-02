@@ -4,6 +4,7 @@ var {Executors} = java.util.concurrent;
 var {ClientBootstrap,
      ServerBootstrap} = org.jboss.netty.bootstrap;
 var {ChannelFutureListener,
+     ChannelLocal,
      ChannelState,
      ChannelStateEvent,
      ExceptionEvent,
@@ -137,6 +138,24 @@ function SocketConnection(channel, options) {
     this.localAddress = this.wrapAddress(channel.localAddress);
   }
 }
+
+/**
+ * (Internal) A ChannelLocal which maintains a persistent attributes hash for each channel.
+ */
+var connectionAttributes = JavaAdapter(ChannelLocal, {
+  initialValue: function () {
+    return {};
+  }
+});
+
+/**
+ * Access this connection's attributes hash.
+ *
+ * @returns an attributes hash
+ */
+SocketConnection.prototype.__defineGetter__('attributes', function () {
+  return connectionAttributes.get(this.channel);
+});
 
 /**
  * Wrap a java.net.InetAddress object.
