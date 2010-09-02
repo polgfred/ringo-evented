@@ -204,12 +204,15 @@ extend(HttpConnection, SocketConnection);
  */
 HttpConnection.prototype.write = function (data) {
   var msg;
-  if (this.started) {
-    msg = unwrapChunk(data);
+  
+  if (this.options.mode == 'client' && data.method) {
+    msg = unwrapRequest(data);
+  } else if (this.options.mode == 'server' && data.status) {
+    msg = unwrapResponse(data);
   } else {
-    msg = (this.options.mode == 'client' ? unwrapRequest : unwrapResponse)(data);
-    this.started = true;
+    msg = unwrapChunk(data);
   }
+
   return this.wrapFuture(this.channel.write(msg));
 };
 
