@@ -59,9 +59,52 @@ function getHeaders(request) {
 }
 
 /**
- * (Internal) Return a read-only view of a Netty HttpRequest.
+ * (Internal) Calculate the URI from a data object consisting of either uri, or path and params.
  *
- * @returns a request
+ * @returns a uri
+ */
+function getUri(data) {
+  var uri = data.uri;
+
+  if (!uri) {
+    var encoder = new QueryStringEncoder(data.path);
+    for each (var param in Object.keys(data.params)) {
+      encoder.addParam(param, String(data.params[param]));
+    }
+    uri = encoder.toString();
+  }
+
+  return uri;
+}
+
+/**
+ * (Internal) Put the headers from a data object into a Netty HttpRequest or HttpResponse.
+ */
+function putHeaders(message, data) {
+  for each (var k in Object.keys(data.headers || {})) {
+    message.addHeader(k, data.headers[k]);
+  }
+}
+
+/**
+ * (Internal) Put the content from a data object into a Netty HttpRequest or HttpResponse.
+ */
+function putContent(message, data) {
+  if (data.chunked) {
+    message.chunked = true;
+  } else {
+    message.chunked = false;
+    if (data.content) {
+      message.content = ChannelBuffers.wrappedBuffer(data.content.toByteArray());
+    }
+    HttpHeaders.setContentLength(message, message.content.readableBytes());
+  }
+}
+
+/**
+ * (Internal) Convert a Netty HttpRequest into a data object.
+ *
+ * @returns a request object
  */
 function wrapRequest(request) {
   var method = String(request.method.name);
@@ -83,44 +126,26 @@ function wrapRequest(request) {
 }
 
 /**
- * (Internal) Convert an object into a Netty HttpRequest.
- *
- * TODO: refactor!
+ * (Internal) Convert a data object into a Netty HttpRequest.
  *
  * @returns an HttpRequest
  */
 function unwrapRequest(data) {
-  var uri = data.uri;
-  if (!uri) {
-    var encoder = new QueryStringEncoder(data.path);
-    for each (var param in Object.keys(data.params)) {
-      encoder.addParam(param, String(data.params[param]));
-    }
-    uri = encoder.toString();
-  }
+  var request = new DefaultHttpRequest(
+    HttpVersion.HTTP_1_1,
+    HttpMethod.valueOf(data.method),
+    getUri(data));
 
-  var request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.valueOf(data.method), uri);
-  for each (var k in Object.keys(data.headers || {})) {
-    request.addHeader(k, data.headers[k]);
-  }
-
-  if (data.chunked) {
-    request.chunked = true;
-  } else {
-    request.chunked = false;
-    if (data.content) {
-      request.content = ChannelBuffers.wrappedBuffer(data.content.toByteArray());
-    }
-    HttpHeaders.setContentLength(request, request.content.readableBytes());
-  }
+  putHeaders(request, data);
+  putContent(request, data);
 
   return request;
 }
 
 /**
- * (Internal) Return a read-only view of a Netty HttpResponse.
+ * (Internal) Convert a Netty HttpResponse into a data object.
  *
- * @returns a response
+ * @returns a response object
  */
 function wrapResponse(response) {
   var status = parseInt(response.status.code);
@@ -139,31 +164,23 @@ function wrapResponse(response) {
 }
 
 /**
- * (Internal) Convert an object into a Netty HttpResponse.
- *
- * TODO: refactor!
+ * (Internal) Convert a data object into a Netty HttpResponse.
  *
  * @returns an HttpResponse
  */
 function unwrapResponse(data) {
-  var response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(data.status));
-  for each (var k in Object.keys(data.headers || {})) {
-    response.addHeader(k, data.headers[k]);
-  }
+  var response = new DefaultHttpResponse(
+    HttpVersion.HTTP_1_1,
+    HttpResponseStatus.valueOf(data.status));
 
-  if (data.chunked) {
-    response.chunked = true;
-  } else {
-    response.chunked = false;
-    response.content = ChannelBuffers.wrappedBuffer(data.content.toByteArray());
-    HttpHeaders.setContentLength(response, response.content.readableBytes());
-  }
+  putHeaders(response, data);
+  putContent(response, data);
 
   return response;
 }
 
 /**
- * (Internal) Return a read-only view of a Netty HttpChunk.
+ * (Internal) Convert a Netty HttpChunk into a data object.
  *
  * @returns a chunk
  */
@@ -184,7 +201,7 @@ function wrapChunk(chunk) {
 }
 
 /**
- * (Internal) Convert an object into a Netty HttpChunk.
+ * (Internal) Convert a data object into a Netty HttpChunk.
  *
  * @returns an HttpChunk
  */
@@ -193,7 +210,7 @@ function unwrapChunk(data) {
 }
 
 /**
- * (Internal) Wrap a Netty channel.
+ * Construct a new HTTP connection that wraps a Netty Channel.
  */
 function HttpConnection(channel, options) {
   SocketConnection.call(this, channel, options);
@@ -202,7 +219,7 @@ function HttpConnection(channel, options) {
 extend(HttpConnection, SocketConnection);
 
 /**
- * Write a chunk of data to the HTTP client.
+ * Write a chunk of data to the HTTP connection.
  *
  * @returns a write promise
  */
