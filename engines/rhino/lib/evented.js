@@ -43,7 +43,7 @@ SocketEndpoint.prototype.dispatchUpstreamEvent = function (ctx, evt) {
  * (Internal) Handle a Netty ChannelStateEvent.
  */
 SocketEndpoint.prototype.handleStateChange = function (ctx, evt) {
-  var conn = this.wrapConnection(ctx.channel);
+  var conn = this.wrapChannel(ctx.channel);
   if (evt.state == ChannelState.OPEN) {
     this.notify(evt.value ? 'open' : 'close', conn);
   } else if (evt.state == ChannelState.BOUND) {
@@ -64,7 +64,7 @@ SocketEndpoint.prototype.handleMessage = function (ctx, evt) {
  */
 SocketEndpoint.prototype.handleError = function (ctx, evt) {
   evt.cause.printStackTrace();
-  var conn = this.wrapConnection(ctx.channel);
+  var conn = this.wrapChannel(ctx.channel);
   this.notify('error', conn, evt.cause);
 };
 
@@ -118,7 +118,7 @@ extend(SocketClient, SocketEndpoint);
  */
 SocketClient.prototype.connect = function () {
   var future = this.bootstrap.connect(new InetSocketAddress(this.options.host, this.options.port));
-  return this.wrapConnection(future.channel).wrapFuture(future);
+  return this.wrapChannel(future.channel).wrapFuture(future);
 };
 
 /**

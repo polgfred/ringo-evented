@@ -251,7 +251,7 @@ HttpServer.prototype.createPipeline = function () {
  * HttpChunk, and then wrap appropriately.
  */
 HttpServer.prototype.handleMessage = function (ctx, evt) {
-  var conn = this.wrapConnection(ctx.channel);
+  var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
   if (message instanceof HttpRequest) {
     this.notify('request', conn, wrapRequest(message));
@@ -268,7 +268,7 @@ HttpServer.prototype.handleMessage = function (ctx, evt) {
  *
  * @returns an HTTP connection
  */
-HttpServer.prototype.wrapConnection = function (channel) {
+HttpServer.prototype.wrapChannel = function (channel) {
   return new HttpConnection(channel, { mode: 'server' });
 };
 
@@ -318,7 +318,7 @@ HttpClient.prototype.createPipeline = function () {
  * HttpChunk, and then wrap appropriately.
  */
 HttpClient.prototype.handleMessage = function (ctx, evt) {
-  var conn = this.wrapConnection(ctx.channel);
+  var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
   if (message instanceof HttpResponse) {
     this.notify('response', conn, wrapResponse(message));
@@ -335,7 +335,7 @@ HttpClient.prototype.handleMessage = function (ctx, evt) {
  *
  * @returns an HTTP connection
  */
-HttpClient.prototype.wrapConnection = function (channel) {
+HttpClient.prototype.wrapChannel = function (channel) {
   return new HttpConnection(channel, { mode: 'client' });
 };
 
