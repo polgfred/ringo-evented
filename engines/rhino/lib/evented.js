@@ -45,6 +45,7 @@ SocketEndpoint.prototype.dispatchUpstreamEvent = function (ctx, evt) {
  */
 SocketEndpoint.prototype.handleStateChange = function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
+
   if (evt.state == ChannelState.OPEN) {
     this.notify(evt.value ? 'open' : 'close', conn);
   } else if (evt.state == ChannelState.BOUND) {
@@ -82,6 +83,7 @@ SocketEndpoint.prototype.notify = EventManager.notify;
  */
 function SocketServer(options) {
   SocketEndpoint.call(this, options);
+
   this.bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(
       Executors.newCachedThreadPool(),
@@ -104,6 +106,7 @@ SocketServer.prototype.start = function () {
  */
 function SocketClient(options) {
   SocketEndpoint.call(this, options);
+
   this.bootstrap = new ClientBootstrap(
     new NioClientSocketChannelFactory(
       Executors.newCachedThreadPool(),
@@ -119,6 +122,7 @@ extend(SocketClient, SocketEndpoint);
  */
 SocketClient.prototype.connect = function () {
   var future = this.bootstrap.connect(new InetSocketAddress(this.options.host, this.options.port));
+
   return this.wrapChannel(future.channel).wrapFuture(future);
 };
 
@@ -183,7 +187,7 @@ SocketConnection.prototype.wrapFuture = function (future) {
   return {
     then: function (continuation) {
       future.addListener(new ChannelFutureListener({
-        operationComplete: function (future) {
+        operationComplete: function () {
           continuation(self);
         }
       }));

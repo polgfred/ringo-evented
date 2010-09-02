@@ -35,9 +35,11 @@ function getPathAndParams(request) {
   var decoder = new QueryStringDecoder(request.uri);
   var path = String(decoder.path);
   var params = {};
+
   for each (var entry in Iterator(decoder.parameters.entrySet())) {
     params[entry.key] = String(entry.value.get(0));
   }
+
   return [path, params];
 }
 
@@ -48,9 +50,11 @@ function getPathAndParams(request) {
  */
 function getHeaders(request) {
   var headers = {};
+
   for each (var entry in Iterator(request.headers)) {
     headers[entry.key.toLowerCase()] = String(entry.value);
   }
+
   return headers;
 }
 
@@ -167,6 +171,7 @@ function wrapChunk(chunk) {
   var headers;
   var content = String(chunk.content.toString(CharsetUtil.UTF_8));
   var last = chunk.last;
+
   if (last) {
     headers = getHeaders(chunk);
   }
@@ -192,7 +197,6 @@ function unwrapChunk(data) {
  */
 function HttpConnection(channel, options) {
   SocketConnection.call(this, channel, options);
-  this.started = false;
 }
 
 extend(HttpConnection, SocketConnection);
@@ -227,6 +231,7 @@ HttpConnection.prototype.write = function (data) {
  */
 function HttpServer(options) {
   SocketServer.call(this, options);
+
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
 }
 
@@ -239,6 +244,7 @@ extend(HttpServer, SocketServer);
  */
 HttpServer.prototype.createPipeline = function () {
   var pipeline = Channels.pipeline();
+
   pipeline.addLast('codec', new HttpServerCodec());
   if (this.options.compress) {
     pipeline.addLast('deflater', new HttpContentCompressor());
@@ -246,6 +252,7 @@ HttpServer.prototype.createPipeline = function () {
   pipeline.addLast('handler', new ChannelUpstreamHandler({
     handleUpstream: this.dispatchUpstreamEvent.bind(this)
   }));
+
   return pipeline;
 };
 
@@ -256,6 +263,7 @@ HttpServer.prototype.createPipeline = function () {
 HttpServer.prototype.handleMessage = function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
+
   if (message instanceof HttpRequest) {
     this.notify('request', conn, wrapRequest(message));
   } else if (message instanceof HttpChunk) {
@@ -287,6 +295,7 @@ HttpServer.prototype.wrapChannel = function (channel) {
  */
 function HttpClient(options) {
   SocketClient.call(this, options);
+
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
 }
 
@@ -308,11 +317,13 @@ HttpClient.prototype.request = function (object) {
  */
 HttpClient.prototype.createPipeline = function () {
   var pipeline = Channels.pipeline();
+
   pipeline.addLast('codec', new HttpClientCodec());
   pipeline.addLast('inflater', new HttpContentDecompressor());
   pipeline.addLast('handler', new ChannelUpstreamHandler({
     handleUpstream: this.dispatchUpstreamEvent.bind(this)
   }));
+
   return pipeline;
 };
 
@@ -323,6 +334,7 @@ HttpClient.prototype.createPipeline = function () {
 HttpClient.prototype.handleMessage = function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
+
   if (message instanceof HttpResponse) {
     this.notify('response', conn, wrapResponse(message));
   } else if (message instanceof HttpChunk) {
