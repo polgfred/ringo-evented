@@ -85,27 +85,27 @@ function wrapRequest(request) {
  *
  * @returns an HttpRequest
  */
-function unwrapRequest(object) {
-  var uri = object.uri;
+function unwrapRequest(data) {
+  var uri = data.uri;
   if (!uri) {
-    var encoder = new QueryStringEncoder(object.path);
-    for each (var param in Object.keys(object.params)) {
-      encoder.addParam(param, String(object.params[param]));
+    var encoder = new QueryStringEncoder(data.path);
+    for each (var param in Object.keys(data.params)) {
+      encoder.addParam(param, String(data.params[param]));
     }
     uri = encoder.toString();
   }
 
-  var request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.valueOf(object.method), uri);
-  for each (var k in Object.keys(object.headers || {})) {
-    request.addHeader(k, object.headers[k]);
+  var request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.valueOf(data.method), uri);
+  for each (var k in Object.keys(data.headers || {})) {
+    request.addHeader(k, data.headers[k]);
   }
 
-  if (object.chunked) {
+  if (data.chunked) {
     request.chunked = true;
   } else {
     request.chunked = false;
-    if (object.content) {
-      request.content = ChannelBuffers.wrappedBuffer(object.content.toByteArray());
+    if (data.content) {
+      request.content = ChannelBuffers.wrappedBuffer(data.content.toByteArray());
     }
     HttpHeaders.setContentLength(request, request.content.readableBytes());
   }
@@ -141,17 +141,17 @@ function wrapResponse(response) {
  *
  * @returns an HttpResponse
  */
-function unwrapResponse(object) {
-  var response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(object.status));
-  for each (var k in Object.keys(object.headers || {})) {
-    response.addHeader(k, object.headers[k]);
+function unwrapResponse(data) {
+  var response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(data.status));
+  for each (var k in Object.keys(data.headers || {})) {
+    response.addHeader(k, data.headers[k]);
   }
 
-  if (object.chunked) {
+  if (data.chunked) {
     response.chunked = true;
   } else {
     response.chunked = false;
-    response.content = ChannelBuffers.wrappedBuffer(object.content.toByteArray());
+    response.content = ChannelBuffers.wrappedBuffer(data.content.toByteArray());
     HttpHeaders.setContentLength(response, response.content.readableBytes());
   }
 
@@ -183,8 +183,8 @@ function wrapChunk(chunk) {
  *
  * @returns an HttpChunk
  */
-function unwrapChunk(object) {
-  return new DefaultHttpChunk(ChannelBuffers.wrappedBuffer(object.content.toByteArray()));
+function unwrapChunk(data) {
+  return new DefaultHttpChunk(ChannelBuffers.wrappedBuffer(data.content.toByteArray()));
 }
 
 /**
