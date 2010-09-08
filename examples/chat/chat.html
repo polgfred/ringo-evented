@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <body>
+    <input type="text" id="message" size="80">
+    <button id="submit">Send</button>
+
+    <ul id="messages"></ul>
+
+    <script>
+      function E() {
+        return document.getElementById.apply(document, arguments);
+      }
+
+      var xhr = new XMLHttpRequest();
+      var userId = prompt('Who are you?');
+      var readCounter;
+
+      function say(body) {
+        readCounter = 0;
+        xhr.open('POST', '/say', true);
+        xhr.send(JSON.stringify(body));
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState < 3)
+            return;
+
+          var payload = JSON.parse(xhr.responseText.slice(readCounter));
+          readCounter = xhr.responseText.length;
+
+          var li = document.createElement('li');
+          li.innerHTML = '<cite>' + payload.userId + '</cite>: ' + payload.message;
+          E('messages').appendChild(li);
+        };
+      }
+
+      E('submit').addEventListener('click', function () {
+        say({ userId: userId, message: E('message').value });
+        E('message').value = '';
+      }, false);
+
+      say({ userId: userId });
+    </script>
+  </body>
+</html>
