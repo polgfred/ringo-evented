@@ -67,7 +67,6 @@ SocketEndpoint.prototype.handleMessage = function (ctx, evt) {
 SocketEndpoint.prototype.handleError = function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
 
-  evt.cause.printStackTrace();
   this.notify('error', conn, evt.cause);
 };
 

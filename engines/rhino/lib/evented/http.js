@@ -68,7 +68,7 @@ function getUri(data) {
 
   if (!uri) {
     var encoder = new QueryStringEncoder(data.path);
-    for each (var param in Object.keys(data.params)) {
+    for each (var param in Object.keys(data.params || {})) {
       encoder.addParam(param, String(data.params[param]));
     }
     uri = encoder.toString();
@@ -219,7 +219,7 @@ function HttpConnection(channel, options) {
 extend(HttpConnection, SocketConnection);
 
 /**
- * Write a chunk of data to the HTTP connection.
+ * Write some data to the HTTP connection.
  *
  * @returns a write promise
  */
