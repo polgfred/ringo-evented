@@ -15,7 +15,7 @@ var {NioClientSocketChannelFactory,
 // stuff that we need for byte streams
 require('binary');
 
-var {extend} = require('objects');
+var {Class} = require('class');
 var {EventManager} = require('eventmanager');
 
 /**
@@ -73,8 +73,7 @@ SocketEndpoint.prototype.handleError = function (ctx, evt) {
 /**
  * Mixin EventManager to get subscribe/notify behavior.
  */
-SocketEndpoint.prototype.listen = EventManager.listen;
-SocketEndpoint.prototype.notify = EventManager.notify;
+Class.include(SocketEndpoint, EventManager);
 
 /**
  * Create a new generic server.
@@ -90,7 +89,7 @@ function SocketServer(options) {
       Executors.newCachedThreadPool()));
 }
 
-extend(SocketServer, SocketEndpoint);
+Class.extend(SocketServer, SocketEndpoint);
 
 /**
  * Start the server by binding to the specified port.
@@ -113,7 +112,7 @@ function SocketClient(options) {
       Executors.newCachedThreadPool()));
 }
 
-extend(SocketClient, SocketEndpoint);
+Class.extend(SocketClient, SocketEndpoint);
 
 /**
  * Connect to a remote server on the specified host and port.

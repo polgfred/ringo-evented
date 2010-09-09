@@ -20,7 +20,7 @@ var {DefaultHttpChunk,
      QueryStringEncoder} = org.jboss.netty.handler.codec.http;
 var {CharsetUtil} = org.jboss.netty.util;
 
-var {extend} = require('objects');
+var {Class} = require('class');
 var {SocketEndpoint,
      SocketClient,
      SocketConnection,
@@ -216,7 +216,7 @@ function HttpConnection(channel, options) {
   SocketConnection.call(this, channel, options);
 }
 
-extend(HttpConnection, SocketConnection);
+Class.extend(HttpConnection, SocketConnection);
 
 /**
  * Write some data to the HTTP connection.
@@ -252,7 +252,7 @@ function HttpServer(options) {
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
 }
 
-extend(HttpServer, SocketServer);
+Class.extend(HttpServer, SocketServer);
 
 /**
  * (Internal) Creates the proper Netty ChannelPipeline for an HTTP server.
@@ -316,7 +316,7 @@ function HttpClient(options) {
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
 }
 
-extend(HttpClient, SocketClient);
+Class.extend(HttpClient, SocketClient);
 
 /**
  * Connect the client to a server at the specified host and port.
