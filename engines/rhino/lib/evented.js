@@ -23,14 +23,14 @@ var {EventManager} = require('eventmanager');
  *
  * @returns a new endpoint
  */
-function SocketEndpoint(options) {
+var SocketEndpoint = Class.create(function (options) {
   this.options = options || {};
-}
+});
 
 /**
  * (Internal) Dispatch socket-level events to the SocketEndpoint's event listener.
  */
-SocketEndpoint.prototype.dispatchUpstreamEvent = function (ctx, evt) {
+SocketEndpoint.define('dispatchUpstreamEvent', function (ctx, evt) {
   if (evt instanceof ChannelStateEvent) {
     this.handleStateChange(ctx, evt);
   } else if (evt instanceof MessageEvent) {
@@ -38,12 +38,12 @@ SocketEndpoint.prototype.dispatchUpstreamEvent = function (ctx, evt) {
   } else if (evt instanceof ExceptionEvent) {
     this.handleError(ctx, evt);
   }
-};
+});
 
 /**
  * (Internal) Handle a Netty ChannelStateEvent.
  */
-SocketEndpoint.prototype.handleStateChange = function (ctx, evt) {
+SocketEndpoint.define('handleStateChange', function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
 
   if (evt.state == ChannelState.OPEN) {
@@ -53,84 +53,80 @@ SocketEndpoint.prototype.handleStateChange = function (ctx, evt) {
   } else if (evt.state == ChannelState.CONNECTED) {
     this.notify(evt.value ? 'connect' : 'disconnect', conn);
   }
-};
+});
 
 /**
  * (Internal) Handle a Netty MessageEvent. Server subtypes need to override this, as it does nothing.
  */
-SocketEndpoint.prototype.handleMessage = function (ctx, evt) {
-};
+SocketEndpoint.define('handleMessage', function (ctx, evt) {
+});
 
 /**
  * (Internal) Handle a Netty ExceptionEvent. Server subtypes can be smarter about this if they wish.
  */
-SocketEndpoint.prototype.handleError = function (ctx, evt) {
+SocketEndpoint.define('handleError', function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
 
   this.notify('error', conn, evt.cause);
-};
+});
 
 /**
  * Mixin EventManager to get subscribe/notify behavior.
  */
-Class.include(SocketEndpoint, EventManager);
+SocketEndpoint.include(EventManager);
 
 /**
  * Create a new generic server.
  *
  * @returns a new server
  */
-function SocketServer(options) {
-  SocketEndpoint.call(this, options);
+var SocketServer = SocketEndpoint.extend(function (options) {
+  this.super(options);
 
   this.bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(
       Executors.newCachedThreadPool(),
       Executors.newCachedThreadPool()));
-}
-
-Class.extend(SocketServer, SocketEndpoint);
+});
 
 /**
  * Start the server by binding to the specified port.
  */
-SocketServer.prototype.start = function () {
+SocketServer.define('start', function () {
   this.bootstrap.bind(new InetSocketAddress(this.options.port));
-};
+});
 
 /**
  * Create a new generic client.
  *
  * @returns a new client
  */
-function SocketClient(options) {
-  SocketEndpoint.call(this, options);
+var SocketClient = SocketEndpoint.extend(function (options) {
+  this.super(options);
 
   this.bootstrap = new ClientBootstrap(
     new NioClientSocketChannelFactory(
       Executors.newCachedThreadPool(),
       Executors.newCachedThreadPool()));
-}
-
-Class.extend(SocketClient, SocketEndpoint);
+});
 
 /**
  * Connect to a remote server on the specified host and port.
  *
  * @returns a connect promise
  */
-SocketClient.prototype.connect = function () {
+SocketClient.define('connect', function () {
   var future = this.bootstrap.connect(new InetSocketAddress(this.options.host, this.options.port));
 
   return this.wrapChannel(future.channel).wrapFuture(future);
-};
+});
 
 /**
  * Create a new generic Connection.
  *
  * @returns the new connection
  */
-function SocketConnection(channel, options) {
+var SocketConnection = Class.create(function (channel, options) {
   this.channel = channel;
   this.options = options;
 
@@ -140,7 +136,7 @@ function SocketConnection(channel, options) {
   if (channel.localAddress) {
     this.localAddress = this.wrapAddress(channel.localAddress);
   }
-}
+});
 
 /**
  * (Internal) A ChannelLocal which maintains a persistent attributes hash for each channel.
@@ -165,7 +161,7 @@ SocketConnection.prototype.__defineGetter__('attributes', function () {
  *
  * @returns an internet address
  */
-SocketConnection.prototype.wrapAddress = function (addr) {
+SocketConnection.define('wrapAddress', function (addr) {
   var hostname = String(addr.hostName);
   var address = String(addr.hostAddress);
 
@@ -173,14 +169,14 @@ SocketConnection.prototype.wrapAddress = function (addr) {
     hostname: hostname,
     address:  address
   };
-}
+});
 
 /**
  * Return a connect promise for the Netty ChannelFuture.
  *
  * @returns a connect promise
  */
-SocketConnection.prototype.wrapFuture = function (future) {
+SocketConnection.define('wrapFuture', function (future) {
   var self = this;
 
   return {
@@ -195,7 +191,7 @@ SocketConnection.prototype.wrapFuture = function (future) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
   };
-};
+});
 
 /**
  * Module exports.

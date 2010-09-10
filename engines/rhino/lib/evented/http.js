@@ -212,18 +212,16 @@ function unwrapChunk(data) {
 /**
  * Construct a new HTTP connection that wraps a Netty Channel.
  */
-function HttpConnection(channel, options) {
-  SocketConnection.call(this, channel, options);
-}
-
-Class.extend(HttpConnection, SocketConnection);
+var HttpConnection = SocketConnection.extend(function (channel, options) {
+  this.super(channel, options);
+});
 
 /**
  * Write some data to the HTTP connection.
  *
  * @returns a write promise
  */
-HttpConnection.prototype.write = function (data) {
+HttpConnection.define('write', function (data) {
   var msg;
   
   if (this.options.mode == 'client' && data.method) {
@@ -235,7 +233,7 @@ HttpConnection.prototype.write = function (data) {
   }
 
   return this.wrapFuture(this.channel.write(msg));
-};
+});
 
 /**
  * Construct a new HTTP server with a sensible Netty ChannelPipelineFactory.
@@ -246,20 +244,18 @@ HttpConnection.prototype.write = function (data) {
  *
  * @returns a new HTTP server
  */
-function HttpServer(options) {
-  SocketServer.call(this, options);
+var HttpServer = SocketServer.extend(function (options) {
+  this.super(options);
 
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
-}
-
-Class.extend(HttpServer, SocketServer);
+});
 
 /**
  * (Internal) Creates the proper Netty ChannelPipeline for an HTTP server.
  *
  * @returns a new pipeline
  */
-HttpServer.prototype.createPipeline = function () {
+HttpServer.define('createPipeline', function () {
   var pipeline = Channels.pipeline();
 
   pipeline.addLast('codec', new HttpServerCodec());
@@ -271,13 +267,13 @@ HttpServer.prototype.createPipeline = function () {
   }));
 
   return pipeline;
-};
+});
 
 /**
  * (Internal) Handle a Netty MessageEvent. Here, we determine whether the message is a HttpRequest or an
  * HttpChunk, and then wrap appropriately.
  */
-HttpServer.prototype.handleMessage = function (ctx, evt) {
+HttpServer.define('handleMessage', function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
 
@@ -286,7 +282,7 @@ HttpServer.prototype.handleMessage = function (ctx, evt) {
   } else if (message instanceof HttpChunk) {
     this.notify('chunk', conn, wrapChunk(message));
   }
-};
+});
 
 /**
  * (Internal) Wraps the Netty Channel in an HttpConnection.
@@ -296,9 +292,9 @@ HttpServer.prototype.handleMessage = function (ctx, evt) {
  *
  * @returns an HTTP connection
  */
-HttpServer.prototype.wrapChannel = function (channel) {
+HttpServer.define('wrapChannel', function (channel) {
   return new HttpConnection(channel, { mode: 'server' });
-};
+});
 
 /**
  * Construct a new HTTP client with a sensible Netty ChannelPipelineFactory.
@@ -310,29 +306,27 @@ HttpServer.prototype.wrapChannel = function (channel) {
  *
  * @returns a new HTTP client
  */
-function HttpClient(options) {
-  SocketClient.call(this, options);
+var HttpClient = SocketClient.extend(function (options) {
+  this.super(options);
 
   this.bootstrap.pipelineFactory = this.createPipeline.bind(this);
-}
-
-Class.extend(HttpClient, SocketClient);
+});
 
 /**
  * Connect the client to a server at the specified host and port.
  */
-HttpClient.prototype.request = function (object) {
+HttpClient.define('request', function (object) {
   this.connect().then(function (conn) {
     conn.write(object);
   });
-};
+});
 
 /**
  * (Internal) Creates the proper Netty ChannelPipeline for an HTTP client.
  *
  * @returns a new pipeline
  */
-HttpClient.prototype.createPipeline = function () {
+HttpClient.define('createPipeline', function () {
   var pipeline = Channels.pipeline();
 
   pipeline.addLast('codec', new HttpClientCodec());
@@ -342,13 +336,13 @@ HttpClient.prototype.createPipeline = function () {
   }));
 
   return pipeline;
-};
+});
 
 /**
  * (Internal) Handle a Netty MessageEvent. Here, we determine whether the message is a HttpResponse or an
  * HttpChunk, and then wrap appropriately.
  */
-HttpClient.prototype.handleMessage = function (ctx, evt) {
+HttpClient.define('handleMessage', function (ctx, evt) {
   var conn = this.wrapChannel(ctx.channel);
   var message = evt.message;
 
@@ -357,7 +351,7 @@ HttpClient.prototype.handleMessage = function (ctx, evt) {
   } else if (message instanceof HttpChunk) {
     this.notify('chunk', conn, wrapChunk(message));
   }
-};
+});
 
 /**
  * (Internal) Wraps the Netty Channel in an HttpConnection.
@@ -367,9 +361,9 @@ HttpClient.prototype.handleMessage = function (ctx, evt) {
  *
  * @returns an HTTP connection
  */
-HttpClient.prototype.wrapChannel = function (channel) {
+HttpClient.define('wrapChannel', function (channel) {
   return new HttpConnection(channel, { mode: 'client' });
-};
+});
 
 /**
  * Module exports.
