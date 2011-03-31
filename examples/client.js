@@ -5,6 +5,10 @@ var client = new HttpClient({ host: 'localhost', port: 4321 });
 client.listen({
   response: function (conn, response) {
     print(response.content);
+  },
+
+  chunk: function (conn, response) {
+    print(response.content);
   }
 });
 
